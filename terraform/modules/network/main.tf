@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.0"
+      version = "~> 5.0"
     }
   }
 }
@@ -88,7 +88,6 @@ resource "aws_route_table_association" "private_route_table_association" {
 }
 
 resource "aws_eip" "nat_eip" {
-  domain = "vpc"
 
   tags = {
     Name = "${var.env}-nat-eip"
