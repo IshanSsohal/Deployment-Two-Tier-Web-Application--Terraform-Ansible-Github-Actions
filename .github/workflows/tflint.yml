@@ -1,31 +1,39 @@
-name: Terraform Linting with TFLint
+name: Tflint Checks on Terraform Code
 
 on:
   push:
-    branches:
-      - "dev"  
+    branches: 
+      - dev  
   pull_request:
-    branches:
-      - "dev" 
+    branches: 
+      - dev  
+
+permissions: read-all
 
 jobs:
-  lint:
-    name: Run TFLint on Terraform Code
+  tflint-checks:
     runs-on: ubuntu-latest
-
     steps:
-      
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+     
+      - name: Check out Git Repository
+        uses: actions/checkout@v3  
 
-   
-      - name: Setup TFLint
-        uses: terraform-linters/setup-tflint@v4.0.0
+      - uses: actions/cache@v2
+        name: Cache plugin dir
         with:
-          tflint_version: "latest"
+          path: ~/.tflint.d/plugins  
+          key: ${{ runner.os }}-tflint-${{ hashFiles('.tflint.hcl') }}
 
-    
-      - name: Initialize and Run TFLint
-        run: |
-          tflint --init  
-          tflint -f compact        
+      - uses: terraform-linters/setup-tflint@v4.0.0
+        name: Setup TFLint
+        with:
+          github_token: ${{ secrets.CI_GITHUB_TOKEN }}
+        
+      - name: Show version
+        run: tflint --version
+      
+      - name: Init TFLint
+        run: tflint --init
+      
+      - name: Run TFLint
+        run: tflint -f compact --recursive
