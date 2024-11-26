@@ -28,4 +28,4 @@ jobs:
       - name: Initialize and Run TFLint
         run: |
           tflint --init  
-          tflint         
+          tflint -f compact        
