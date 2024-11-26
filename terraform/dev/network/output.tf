@@ -16,3 +16,4 @@ output "public_route_table_id" {
 
 output "private_route_table_id" {
   value = module.vpc-dev.private_route_table_id
+}
