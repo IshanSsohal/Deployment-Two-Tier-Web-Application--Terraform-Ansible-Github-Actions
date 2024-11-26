@@ -1,5 +1,5 @@
 config {
-  call_module_type = true
+  call_module_type = "all"  
   force = false
   disabled_by_default = false
   varfile = ["terraform.tfvars"]
