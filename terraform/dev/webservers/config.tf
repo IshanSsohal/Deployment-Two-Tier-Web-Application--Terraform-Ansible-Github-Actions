@@ -1,4 +1,4 @@
-# terraform {
+#terraform {
 #   required_version = ">= 1.0.0"
 
 #   required_providers {
@@ -19,9 +19,9 @@ terraform {
 
 
   backend "s3" {
-    bucket         = "group-7-dev"    # bucket name
-    key            = "webservers/terraform.tfstate" # Path to the state file
-    region         = "us-east-1"
+    bucket = "group-7-dev"                  # bucket name
+    key    = "webservers/terraform.tfstate" # Path to the state file
+    region = "us-east-1"
   }
 }
-  
+

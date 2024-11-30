@@ -3,7 +3,7 @@ data "terraform_remote_state" "network" {
   backend = "s3"
 
   config = {
-    bucket = "group-7-dev"  #S3 bucket name
+    bucket = "group-7-dev" #S3 bucket name
     key    = "dev/network/terraform.tfstate"
     region = "us-east-1"
   }
@@ -43,19 +43,19 @@ resource "aws_security_group" "web_sg" {
 
 # Use the webservers module
 module "webservers" {
-  source          = "../../modules/webservers"
-  env             = var.env
-  ami_id          = var.ami_id
-  instance_type   = var.instance_type
-  key_name        = var.key_name
-  instance_count  = 6
+  source         = "../../modules/webservers"
+  env            = var.env
+  ami_id         = var.ami_id
+  instance_type  = var.instance_type
+  key_name       = var.key_name
+  instance_count = 6
 
   # Fetch public and private subnet IDs from the remote state
-  subnet_ids      = concat(
+  subnet_ids = concat(
     data.terraform_remote_state.network.outputs.public_subnet_id,
     data.terraform_remote_state.network.outputs.private_subnet_id
   )
 
   # Pass the Security Group ID
-  web_sg_id       = aws_security_group.web_sg.id
+  web_sg_id = aws_security_group.web_sg.id
 }
