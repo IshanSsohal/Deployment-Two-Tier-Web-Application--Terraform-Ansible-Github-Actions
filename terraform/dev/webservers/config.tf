@@ -16,11 +16,12 @@ terraform {
       version = "~> 5.0"
     }
   }
-}
 
-backend "s3" {
-  bucket         = "group-7-dev"    # bucket name
-  key            = "webservers/terraform.tfstate" # Path to the state file
-  region         = "us-east-1"
+
+  backend "s3" {
+    bucket         = "group-7-dev"    # bucket name
+    key            = "webservers/terraform.tfstate" # Path to the state file
+    region         = "us-east-1"
+  }
 }
   
