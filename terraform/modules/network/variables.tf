@@ -21,5 +21,11 @@ variable "private_cidr_blocks" {
   type        = list(string)
   description = "CIDR blocks for private subnets"
 }
+variable "azs" {
+  description = "List of specific availability zones"
+  type        = list(string)
+  default     = ["us-east-1a", "us-east-1b", "us-east-1c", "us-east-1d"]
+}
+
 
 
