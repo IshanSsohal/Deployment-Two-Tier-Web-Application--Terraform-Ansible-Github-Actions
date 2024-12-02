@@ -1,12 +1,8 @@
-output "webserver_instance_ids" {
-  value = module.webservers.webserver_instance_ids
+# Add output variables
+output "public_webservers_ip_address" {
+  value = module.dev-webservers.public_webservers_ip_address
 }
 
-output "webserver_private_ips" {
-  value = module.webservers.webserver_private_ips
+output "private_webservers_ip_address" {
+  value = module.dev-webservers.private_webservers_ip_address
 }
-
-output "webserver_public_ips" {
-  value = module.webservers.webserver_public_ips
-}
-

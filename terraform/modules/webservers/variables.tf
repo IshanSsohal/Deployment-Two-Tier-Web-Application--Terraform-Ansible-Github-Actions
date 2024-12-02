@@ -1,36 +1,29 @@
-variable "env" {
-  description = "Environment (dev, prod)"
-  type        = string
-}
-
-variable "instance_count" {
-  description = "Number of instances to launch"
-  type        = number
-  default     = 6
-}
-
-variable "ami_id" {
-  description = "AMI ID for the webservers"
-  type        = string
-}
-
+# Instance type
 variable "instance_type" {
-  description = "Instance type for the webservers"
+  default     = "t2.micro"
   type        = string
+  description = "instance type"
 }
 
-variable "key_name" {
-  description = "Name of the key pair for SSH access"
+# Default tags
+variable "default_tags" {
+  default = {
+    "Owner" = "Group7"
+    "App"   = "WebApp"
+  }
+  type        = map(any)
+  description = "Default tags for all resources created in AWS"
+}
+
+# Prefix to identify resources
+variable "prefix" {
+  default     = "group7"
   type        = string
+  description = "Name prefix"
 }
 
-variable "subnet_ids" {
-  description = "List of subnet IDs where webservers will be deployed"
-  type        = list(string)
-}
-
-variable "web_sg_id" {
-  description = "Security group ID for the webservers"
+variable "env" {
+  default     = "dev"
   type        = string
+  description = "Environment"
 }
-

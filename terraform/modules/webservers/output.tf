@@ -1,12 +1,7 @@
-output "webserver_instance_ids" {
-  value = aws_instance.webserver[*].id
+# Add output variables
+output "public_webservers_ip_address" {
+  value = aws_instance.public_webservers[*].public_ip
 }
-
-output "webserver_private_ips" {
-  value = aws_instance.webserver[*].private_ip
+output "private_webservers_ip_address" {
+  value = aws_instance.private_webservers[*].private_ip
 }
-
-output "webserver_public_ips" {
-  value = aws_instance.webserver[*].public_ip
-}
-
