@@ -101,6 +101,7 @@ resource "aws_instance" "private_webservers" {
   key_name                    = aws_key_pair.ssh_keypair.key_name
   security_groups             = [aws_security_group.private_webservers_sg.id]
   subnet_id                   = data.terraform_remote_state.network.outputs.private_subnet_id[count.index]
+  availability_zone           = var.azs[count.index]
   associate_public_ip_address = false
   tags = merge(local.default_tags,
     {
@@ -116,7 +117,7 @@ resource "aws_instance" "public_webservers" {
   key_name                    = aws_key_pair.ssh_keypair.key_name
   security_groups             = [aws_security_group.public_webservers_sg.id]
   subnet_id                   = data.terraform_remote_state.network.outputs.public_subnet_id[count.index]
-  availability_zone           = data.aws_availability_zones.available.names[count.index]
+  availability_zone           = var.azs[count.index]
   associate_public_ip_address = true
   user_data = count.index < 2 ? templatefile("${path.module}/install_httpd.sh",
     {
@@ -164,7 +165,7 @@ resource "aws_autoscaling_group" "webserver_asg" {
     version = "$Latest"
   }
 
-  vpc_zone_identifier = data.terraform_remote_state.network.outputs.public_subnet_id
+  vpc_zone_identifier = slice(data.terraform_remote_state.network.outputs.public_subnet_id, 0, 3)
   desired_capacity    = 2
   min_size            = 1
   max_size            = 4

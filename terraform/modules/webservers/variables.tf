@@ -27,3 +27,9 @@ variable "env" {
   type        = string
   description = "Environment"
 }
+variable "azs" {
+  description = "List of specific availability zones"
+  type        = list(string)
+  default     = ["us-east-1a", "us-east-1b", "us-east-1c", "us-east-1d"]
+}
+
