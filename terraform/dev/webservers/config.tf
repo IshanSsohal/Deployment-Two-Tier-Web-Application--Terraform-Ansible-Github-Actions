@@ -19,7 +19,7 @@ terraform {
 
 
   backend "s3" {
-    bucket = "group-7-dev"                  # bucket name
+    bucket = "group-7-dev"                      # bucket name
     key    = "dev/webservers/terraform.tfstate" # Path to the state file
     region = "us-east-1"
   }

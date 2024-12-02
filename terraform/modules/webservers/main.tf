@@ -37,6 +37,8 @@ locals {
 
 # Security Groups
 # Public webservers security group config
+
+
 resource "aws_security_group" "public_webservers_sg" {
   name        = "public_webservers_inbound_traffic_rules1"
   description = "Rules for inbound SSH and HTTP traffic"
@@ -128,6 +130,121 @@ resource "aws_instance" "public_webservers" {
     }
   )
 }
+
+resource "aws_launch_template" "webserver_launch_template" {
+  name_prefix   = "${var.env}-webserver-launch-template"
+  image_id      = data.aws_ami.latest_amazon_linux.id
+  instance_type = var.instance_type
+  key_name      = aws_key_pair.ssh_keypair.key_name
+
+  network_interfaces {
+    associate_public_ip_address = true
+    security_groups             = [aws_security_group.public_webservers_sg.id]
+  }
+
+  user_data = base64encode(templatefile("${path.module}/install_httpd.sh",
+    {
+      prefix = upper(var.prefix)
+    }
+  ))
+
+  tag_specifications {
+    resource_type = "instance"
+    tags = merge(local.default_tags,
+      {
+        "Name" = "${local.name_prefix}-webserver"
+      }
+    )
+  }
+}
+
+resource "aws_autoscaling_group" "webserver_asg" {
+  launch_template {
+    id      = aws_launch_template.webserver_launch_template.id
+    version = "$Latest"
+  }
+
+  vpc_zone_identifier = data.terraform_remote_state.network.outputs.public_subnet_id
+  desired_capacity    = 2
+  min_size            = 1
+  max_size            = 4
+
+  target_group_arns = [aws_lb_target_group.webserver_tg.arn]
+
+  tag {
+      key                 = "Name"
+      value               = "${local.name_prefix}-webserver"
+      propagate_at_launch = true
+    }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_lb" "webserver_lb" {
+  name               = "${var.env}-webserver-alb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.public_webservers_sg.id]
+  subnets            = data.terraform_remote_state.network.outputs.public_subnet_id
+
+  enable_deletion_protection = false
+  tags = local.default_tags
+}
+
+resource "aws_lb_listener" "webserver_http_listener" {
+  load_balancer_arn = aws_lb.webserver_lb.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type = "forward"
+    target_group_arn = aws_lb_target_group.webserver_tg.arn
+  }
+}
+
+resource "aws_lb_target_group" "webserver_tg" {
+  name        = "${var.env}-webserver-target-group"
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
+  target_type = "instance"
+
+  health_check {
+    path                = "/"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
+  }
+
+  tags = local.default_tags
+}
+
+resource "aws_security_group" "alb_sg" {
+  name        = "${var.env}-alb-sg"
+  description = "Security group for Application Load Balancer"
+  vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
+
+  ingress {
+    description = "Allow HTTP traffic from anywhere"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = local.default_tags
+}
+
 # Adding SSH key to be used by EC2 instance
 resource "aws_key_pair" "ssh_keypair" {
   key_name   = "${var.env}-keypair"
