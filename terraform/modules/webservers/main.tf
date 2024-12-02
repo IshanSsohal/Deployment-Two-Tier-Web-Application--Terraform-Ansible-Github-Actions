@@ -114,6 +114,7 @@ resource "aws_instance" "public_webservers" {
   key_name                    = aws_key_pair.ssh_keypair.key_name
   security_groups             = [aws_security_group.public_webservers_sg.id]
   subnet_id                   = data.terraform_remote_state.network.outputs.public_subnet_id[count.index]
+  availability_zone           = data.aws_availability_zones.available.names[count.index]
   associate_public_ip_address = true
   user_data = count.index < 2 ? templatefile("${path.module}/install_httpd.sh",
     {
