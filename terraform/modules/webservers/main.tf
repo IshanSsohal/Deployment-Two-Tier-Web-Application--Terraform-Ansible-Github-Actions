@@ -8,12 +8,12 @@ terraform {
     }
   }
 }
-data "terraform_remote_state" "network" { // This is to use Outputs from Remote State
+data "terraform_remote_state" "network" { 
   backend = "s3"
   config = {
-    bucket = "group-7-${var.env}" // Bucket from where to GET Terraform State
+    bucket = "group-7-${var.env}" 
     key    = "dev/network/terraform.tfstate"
-    region = "us-east-1" // Region where bucket created
+    region = "us-east-1" 
   }
 }
 # Data source for AMI id
@@ -25,10 +25,7 @@ data "aws_ami" "latest_amazon_linux" {
     values = ["amzn2-ami-hvm-*-x86_64-gp2"]
   }
 }
-# Data source for availability zones in us-east-1
-data "aws_availability_zones" "available" {
-  state = "available"
-}
+
 # Define tags locally
 locals {
   default_tags = var.default_tags
