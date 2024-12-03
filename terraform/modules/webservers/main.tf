@@ -13,7 +13,7 @@ data "terraform_remote_state" "network" {
   backend = "s3"
   config = {
     bucket = "group-7-${var.env}"
-    key    = "de/network/terraform.tfstate"
+    key    = "dev/network/terraform.tfstate"
     region = "us-east-1"
   }
 }
