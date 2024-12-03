@@ -3,11 +3,11 @@ terraform {
 }
 
 module "dev-webservers" { ##calling the webserver module here
-  source = "../../modules/webservers"
+  source        = "../../modules/webservers"
   env           = var.env
   instance_type = var.instance_type
   prefix        = var.prefix
 }
 
 
-  
+

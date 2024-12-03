@@ -215,6 +215,11 @@ resource "aws_lb_target_group" "webserver_tg" {
     healthy_threshold   = 3
     unhealthy_threshold = 3
   }
+  
+  stickiness {
+    type = "lb_cookie"
+    enabled = false
+  }
 
   tags = local.default_tags
 }
