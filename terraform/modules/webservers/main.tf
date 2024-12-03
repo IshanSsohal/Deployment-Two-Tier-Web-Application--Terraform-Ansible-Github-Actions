@@ -117,7 +117,7 @@ resource "aws_instance" "private_webservers" {
     }
   )
 }
-# Webserver 4 - Static instance
+# Webserver 4 - 
 resource "aws_instance" "webserver_4" {
   ami                         = data.aws_ami.latest_amazon_linux.id
   instance_type               = var.instance_type
@@ -130,7 +130,7 @@ resource "aws_instance" "webserver_4" {
   })
 }
 
-# Launch Template for ASG (Webserver 1 and 2)
+# Launch Template for ASG (Webserver 1 and 3)
 resource "aws_launch_template" "webserver_launch_template" {
   name_prefix   = "${var.env}-webserver-launch-template"
   image_id      = data.aws_ami.latest_amazon_linux.id
@@ -149,12 +149,12 @@ resource "aws_launch_template" "webserver_launch_template" {
   tag_specifications {
     resource_type = "instance"
     tags = merge(local.default_tags, {
-      "Name" = "${local.name_prefix}-webserver"
+      "Name" = "${local.name_prefix}-webserver-temp"
     })
   }
 }
 
-# Auto Scaling Group for Webserver 1 and 2
+# Auto Scaling Group for Webserver 
 resource "aws_autoscaling_group" "webserver_asg" {
   launch_template {
     id      = aws_launch_template.webserver_launch_template.id
@@ -162,7 +162,7 @@ resource "aws_autoscaling_group" "webserver_asg" {
   }
 
   vpc_zone_identifier = slice(data.terraform_remote_state.network.outputs.public_subnet_id, 0, 3)
-  desired_capacity    = 2
+  desired_capacity    = 3
   min_size            = 1
   max_size            = 4
 
