@@ -1,5 +1,5 @@
-terraform/dev/webservers/mykey
-terraform/dev/webservers/mykey.pub
+terraform/dev/webservers/dev-keypair
+terraform/dev/webservers/dev-keypair.pub
 *.pem
 *.pub
 
