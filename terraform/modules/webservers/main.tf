@@ -8,15 +8,16 @@ terraform {
     }
   }
 }
+
 data "terraform_remote_state" "network" { 
   backend = "s3"
   config = {
-    bucket = "group-7-${var.env}" 
-    key    = "dev/network/terraform.tfstate"
-    region = "us-east-1" 
+    bucket = "group-7-${var.env}"
+    key    = "de/network/terraform.tfstate"
+    region = "us-east-1"
   }
 }
-# Data source for AMI id
+
 data "aws_ami" "latest_amazon_linux" {
   owners      = ["amazon"]
   most_recent = true
@@ -26,20 +27,16 @@ data "aws_ami" "latest_amazon_linux" {
   }
 }
 
-# Define tags locally
 locals {
   default_tags = var.default_tags
   name_prefix  = "${var.env}-${var.prefix}"
 }
 
-# Security Groups
-# Public webservers security group config
-
-
 resource "aws_security_group" "public_webservers_sg" {
   name        = "public_webservers_inbound_traffic_rules1"
   description = "Rules for inbound SSH and HTTP traffic"
   vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
+
   ingress {
     description = "Allow inbound HTTP traffic"
     from_port   = 80
@@ -54,43 +51,57 @@ resource "aws_security_group" "public_webservers_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  tags = merge(local.default_tags,
-    {
-      "Name" = "public-webserver-sg"
-    }
-  )
+
+  tags = merge(local.default_tags, {
+    "Name" = "public-webserver-sg"
+  })
 }
-# Private VMs security group config
+
 resource "aws_security_group" "private_webservers_sg" {
   name        = "private_webservers_inbound_traffic_rules1"
   description = "Rules for inbound SSH traffic"
   vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
+
   ingress {
     description = "SSH from public subnet"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["${aws_instance.public_webservers[1].private_ip}/32"]
+    cidr_blocks = ["${aws_instance.bastion.private_ip}/32"]
   }
+
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  tags = merge(local.default_tags,
-    {
-      "Name" = "private-webserver-sg"
-    }
-  )
+
+  tags = merge(local.default_tags, {
+    "Name" = "private-webserver-sg"
+  })
 }
-# Provisioning the private webserver VMs
+
+# Bastion Host - Static instance
+resource "aws_instance" "bastion" {
+  ami                         = data.aws_ami.latest_amazon_linux.id
+  instance_type               = var.instance_type
+  key_name                    = aws_key_pair.ssh_keypair.key_name
+  security_groups             = [aws_security_group.public_webservers_sg.id]
+  subnet_id                   = data.terraform_remote_state.network.outputs.public_subnet_id[0]
+  associate_public_ip_address = true
+  tags = merge(local.default_tags, {
+    "Name" = "${local.name_prefix}-bastion"
+  })
+}
+
 resource "aws_instance" "private_webservers" {
   count                       = length(data.terraform_remote_state.network.outputs.private_subnet_id)
   ami                         = data.aws_ami.latest_amazon_linux.id
@@ -106,29 +117,20 @@ resource "aws_instance" "private_webservers" {
     }
   )
 }
-# Provisioning the public webserver VMs
-resource "aws_instance" "public_webservers" {
-  count                       = length(data.terraform_remote_state.network.outputs.public_subnet_id)
+# Webserver 4 - Static instance
+resource "aws_instance" "webserver_4" {
   ami                         = data.aws_ami.latest_amazon_linux.id
   instance_type               = var.instance_type
   key_name                    = aws_key_pair.ssh_keypair.key_name
   security_groups             = [aws_security_group.public_webservers_sg.id]
-  subnet_id                   = data.terraform_remote_state.network.outputs.public_subnet_id[count.index]
-  availability_zone           = var.azs[count.index]
+  subnet_id                   = data.terraform_remote_state.network.outputs.public_subnet_id[1]
   associate_public_ip_address = true
-  user_data = count.index < 2 ? templatefile("${path.module}/install_httpd.sh",
-    {
-      prefix = upper(var.prefix)
-    }
-  ) : null
-  tags = merge(local.default_tags,
-    {
-      "Name"  = "${local.name_prefix}-public-webserver-${count.index + 1}",
-      "Usage" = count.index >= 2 && count.index <= 3 ? "Ansible" : "Terraform"
-    }
-  )
+  tags = merge(local.default_tags, {
+    "Name" = "${local.name_prefix}-webserver-4"
+  })
 }
 
+# Launch Template for ASG (Webserver 1 and 2)
 resource "aws_launch_template" "webserver_launch_template" {
   name_prefix   = "${var.env}-webserver-launch-template"
   image_id      = data.aws_ami.latest_amazon_linux.id
@@ -140,22 +142,19 @@ resource "aws_launch_template" "webserver_launch_template" {
     security_groups             = [aws_security_group.public_webservers_sg.id]
   }
 
-  user_data = base64encode(templatefile("${path.module}/install_httpd.sh",
-    {
-      prefix = upper(var.prefix)
-    }
-  ))
+  user_data = base64encode(templatefile("${path.module}/install_httpd.sh", {
+    prefix = upper(var.prefix)
+  }))
 
   tag_specifications {
     resource_type = "instance"
-    tags = merge(local.default_tags,
-      {
-        "Name" = "${local.name_prefix}-webserver"
-      }
-    )
+    tags = merge(local.default_tags, {
+      "Name" = "${local.name_prefix}-webserver"
+    })
   }
 }
 
+# Auto Scaling Group for Webserver 1 and 2
 resource "aws_autoscaling_group" "webserver_asg" {
   launch_template {
     id      = aws_launch_template.webserver_launch_template.id
@@ -170,10 +169,10 @@ resource "aws_autoscaling_group" "webserver_asg" {
   target_group_arns = [aws_lb_target_group.webserver_tg.arn]
 
   tag {
-      key                 = "Name"
-      value               = "${local.name_prefix}-webserver"
-      propagate_at_launch = true
-    }
+    key                 = "Name"
+    value               = "${local.name_prefix}-webserver"
+    propagate_at_launch = true
+  }
 
   lifecycle {
     create_before_destroy = true
@@ -243,8 +242,7 @@ resource "aws_security_group" "alb_sg" {
   tags = local.default_tags
 }
 
-# Adding SSH key to be used by EC2 instance
 resource "aws_key_pair" "ssh_keypair" {
   key_name   = "${var.env}-keypair"
-  public_key = file("${path.root}/mykey.pub")
+  public_key = file("${path.root}/${var.env}-keypair.pub")
 }
