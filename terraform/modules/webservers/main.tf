@@ -64,17 +64,26 @@ resource "aws_security_group" "public_webservers_sg" {
   })
 }
 
-resource "aws_security_group" "private_webservers_sg" {
-  name        = "private_webservers_inbound_traffic_rules1"
-  description = "Rules for inbound SSH traffic"
+# Security group for private webserver
+resource "aws_security_group" "private_webserver_sg" {
+  name        = "private_webserver_sg"
+  description = "Rules for inbound SSH and HTTP traffic"
   vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
 
   ingress {
-    description = "SSH from public subnet"
+    description = "SSH from bastion host"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["${aws_instance.bastion.private_ip}/32"]
+  }
+
+  ingress {
+    description = "HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -89,41 +98,81 @@ resource "aws_security_group" "private_webservers_sg" {
   })
 }
 
+# Security group for VM6 
+resource "aws_security_group" "vm6_sg" {
+  name        = "vm6_sg"
+  description = "Rules for inbound SSH traffic only"
+  vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
+
+  ingress {
+    description = "SSH from bastion host"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["${aws_instance.bastion.private_ip}/32"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(local.default_tags, {
+    "Name" = "vm6-sg"
+  })
+}
+
+# Private Webserver
+resource "aws_instance" "private_webserver" {
+  ami                         = data.aws_ami.latest_amazon_linux.id
+  instance_type               = var.instance_type
+  key_name                    = aws_key_pair.ssh_keypair.key_name
+  security_groups             = [aws_security_group.private_webserver_sg.id]
+  subnet_id                   = data.terraform_remote_state.network.outputs.private_subnet_id[0]
+  availability_zone           = var.azs[0]
+  associate_public_ip_address = false
+  tags = merge(local.default_tags, {
+    "Name" = "private-webserver"
+  })
+}
+
+# VM6 
+resource "aws_instance" "vm6" {
+  ami                         = data.aws_ami.latest_amazon_linux.id
+  instance_type               = var.instance_type
+  key_name                    = aws_key_pair.ssh_keypair.key_name
+  security_groups             = [aws_security_group.vm6_sg.id]  # SSH only
+  subnet_id                   = data.terraform_remote_state.network.outputs.private_subnet_id[1]
+  availability_zone           = var.azs[1]
+  associate_public_ip_address = false
+  tags = merge(local.default_tags, {
+    "Name" = "vm6"
+  })
+}
+
 # Bastion Host - Static instance
 resource "aws_instance" "bastion" {
   ami                         = data.aws_ami.latest_amazon_linux.id
   instance_type               = var.instance_type
   key_name                    = aws_key_pair.ssh_keypair.key_name
   security_groups             = [aws_security_group.public_webservers_sg.id]
-  subnet_id                   = data.terraform_remote_state.network.outputs.public_subnet_id[1]
+  subnet_id                   = data.terraform_remote_state.network.outputs.public_subnet_id[0]
   associate_public_ip_address = true
   tags = merge(local.default_tags, {
     "Name" = "${local.name_prefix}-bastion"
   })
 }
 
-resource "aws_instance" "private_webservers" {
-  count                       = length(data.terraform_remote_state.network.outputs.private_subnet_id)
-  ami                         = data.aws_ami.latest_amazon_linux.id
-  instance_type               = var.instance_type
-  key_name                    = aws_key_pair.ssh_keypair.key_name
-  security_groups             = [aws_security_group.private_webservers_sg.id]
-  subnet_id                   = data.terraform_remote_state.network.outputs.private_subnet_id[count.index]
-  availability_zone           = var.azs[count.index]
-  associate_public_ip_address = false
-  tags = merge(local.default_tags,
-    {
-      "Name" = "${local.name_prefix}-private-webserver-${count.index + 1}"
-    }
-  )
-}
+
 # Webserver 4 - 
 resource "aws_instance" "webserver_4" {
   ami                         = data.aws_ami.latest_amazon_linux.id
   instance_type               = var.instance_type
   key_name                    = aws_key_pair.ssh_keypair.key_name
   security_groups             = [aws_security_group.public_webservers_sg.id]
-  subnet_id                   = data.terraform_remote_state.network.outputs.public_subnet_id[3]
+  subnet_id                   = data.terraform_remote_state.network.outputs.public_subnet_id[1]
   associate_public_ip_address = true
   tags = merge(local.default_tags, {
     "Name" = "${local.name_prefix}-webserver-4"
@@ -214,11 +263,6 @@ resource "aws_lb_target_group" "webserver_tg" {
     timeout             = 5
     healthy_threshold   = 3
     unhealthy_threshold = 3
-  }
-  
-  stickiness {
-    type = "lb_cookie"
-    enabled = false
   }
 
   tags = local.default_tags
