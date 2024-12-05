@@ -3,7 +3,7 @@ name: Trivy Security Scanning on Terraform Code
 on:
   push:
     branches:
-      - dev  
+      - dev
   pull_request:
     branches:
       - dev  
@@ -21,7 +21,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run Trivy vulnerability scanner on Terraform files
-        uses: aquasecurity/trivy-action@v0.29.0
+        uses: aquasecurity/trivy-action@v0.29.0  
         with:
           scan-type: 'config'         
           hide-progress: false
