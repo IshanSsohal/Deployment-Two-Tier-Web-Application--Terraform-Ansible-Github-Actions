@@ -1,0 +1,44 @@
+---
+- name: Install and Configure HTTPD
+  hosts: all
+  become: true
+  tasks:
+    - name: Update the system
+      yum:
+        name: "*"
+        state: latest
+
+    - name: Install HTTPD
+      yum:
+        name: httpd
+        state: present
+
+    - name: Start and enable HTTPD
+      service:
+        name: httpd
+        state: started
+        enabled: true
+
+    - name: Create the index.html file
+      copy:
+        dest: /var/www/html/index.html
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Your Custom Web Page</title>
+          </head>
+          <body>
+              <h1 style="text-align: center; color: blue;">ACS730 Group Project Group 7</h1>
+              <p style="text-align: center;">Created by Your Team</p>
+              <div style="text-align: center;">
+              <img src="https://your-s3-bucket.s3.amazonaws.com/image.jpg" alt="S3 Image">
+              </div>
+          </body>
+          </html>
+    - name: Ensure proper permissions for the web directory
+      file:
+        path: /var/www/html
+        state: directory
+        mode: '0755'
+        recurse: yes

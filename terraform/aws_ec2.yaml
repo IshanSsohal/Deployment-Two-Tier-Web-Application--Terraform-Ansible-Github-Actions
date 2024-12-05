@@ -1,0 +1,11 @@
+---
+plugin: aws_ec2
+regions:
+ - us-east-1
+filters:
+  instance-state-name: running
+  availability-zone:
+    - us-east-1c
+    - us-east-1d
+compose:
+  ansible_host: public_ip_address
