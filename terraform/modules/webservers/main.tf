@@ -13,7 +13,7 @@ data "terraform_remote_state" "network" {
   backend = "s3"
   config = {
     bucket = "group-7-${var.env}"
-    key    = "dev/network/terraform.tfstate"
+    key    = "${var.env}/network/terraform.tfstate"
     region = "us-east-1"
   }
 }
@@ -172,7 +172,8 @@ resource "aws_instance" "webserver_4" {
   instance_type               = var.instance_type
   key_name                    = aws_key_pair.ssh_keypair.key_name
   security_groups             = [aws_security_group.public_webservers_sg.id]
-  subnet_id                   = data.terraform_remote_state.network.outputs.public_subnet_id[1]
+  subnet_id                   = data.terraform_remote_state.network.outputs.public_subnet_id[3]
+  availability_zone           = var.azs[1]
   associate_public_ip_address = true
   tags = merge(local.default_tags, {
     "Name" = "${local.name_prefix}-webserver-4"
