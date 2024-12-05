@@ -33,7 +33,7 @@ locals {
 }
 
 resource "aws_security_group" "public_webservers_sg" {
-  name        = "public_webservers_inbound_traffic_rules1"
+  name_prefix = "${var.env}-sg"
   description = "Rules for inbound SSH and HTTP traffic"
   vpc_id      = data.terraform_remote_state.network.outputs.vpc_id
 
@@ -158,7 +158,8 @@ resource "aws_instance" "bastion" {
   instance_type               = var.instance_type
   key_name                    = aws_key_pair.ssh_keypair.key_name
   security_groups             = [aws_security_group.public_webservers_sg.id]
-  subnet_id                   = data.terraform_remote_state.network.outputs.public_subnet_id[0]
+  subnet_id                   = data.terraform_remote_state.network.outputs.public_subnet_id[1]
+  availability_zone           = var.azs[1]
   associate_public_ip_address = true
   tags = merge(local.default_tags, {
     "Name" = "${local.name_prefix}-bastion"
@@ -173,7 +174,7 @@ resource "aws_instance" "webserver_4" {
   key_name                    = aws_key_pair.ssh_keypair.key_name
   security_groups             = [aws_security_group.public_webservers_sg.id]
   subnet_id                   = data.terraform_remote_state.network.outputs.public_subnet_id[3]
-  availability_zone           = var.azs[1]
+  availability_zone           = var.azs[3]
   associate_public_ip_address = true
   tags = merge(local.default_tags, {
     "Name" = "${local.name_prefix}-webserver-4"
