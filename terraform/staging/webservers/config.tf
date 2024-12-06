@@ -9,8 +9,8 @@ terraform {
 
 
   backend "s3" {
-    bucket = "group-7-staging"                      
-    key    = "staging/webservers/terraform.tfstate" 
+    bucket = "group-7-staging"
+    key    = "staging/webservers/terraform.tfstate"
     region = "us-east-1"
   }
 }
