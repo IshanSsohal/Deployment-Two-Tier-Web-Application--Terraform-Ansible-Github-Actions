@@ -7,8 +7,17 @@
         body { font-family: Arial, sans-serif; }
         h1 { color: #FF0000; }
         .metadata { color: blue; }
-        .team-images { display: flex; justify-content: center; gap: 20px; }
-        .team-images img { width: 150px; height: 150px; border-radius: 50%; }
+        .team-image {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .team-image img {
+            width: 100%; /* Responsive scaling */
+            max-width: 800px; /* Limit max size */
+            height: auto; /* Maintain aspect ratio */
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5); /* Optional shadow */
+        }
     </style>
 </head>
 <body>
@@ -17,12 +26,10 @@
         <hr>
         <h1>WELCOME TO GROUP 7 WEBSERVER DEPLOYMENT IN AWS!</h1>
         <hr>
-        <h2>This is a prod environment provisioned by our team</h2>
-        <div class="team-images">
-            {% for image_url in s3_image_urls %}
-            <img src="{{ image_url }}" alt="Team Member">
-            {% endfor %}
+        <div class="team-image">
+            <img src="{{ s3_image_url }}" alt="Group Photo">
         </div>
+        <h2>This is a prod environment provisioned by our team</h2>
         <strong style="color:#FF0000;">
             {% for member in team_members %}
             {{ member }}<br>
