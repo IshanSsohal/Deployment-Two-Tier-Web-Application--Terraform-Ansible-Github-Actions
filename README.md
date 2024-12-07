@@ -7,6 +7,7 @@ This project automates the provisioning of a two-tier web application infrastruc
 ---
 
 ## AWS Architecture
+![image](https://github.com/user-attachments/assets/65fc4231-8a87-4fd4-a123-231b5e60a9a6)
 
 **Key Components:**
 - **VPC:** A Virtual Private Cloud is created to host all resources.
@@ -55,6 +56,117 @@ Each branch corresponds to a separate environment. Before deploying a new enviro
    git clone https://github.com/YourOrg/ACS730FinalProjectGroup7.git
    cd ACS730FinalProjectGroup7
    git checkout dev    # or staging or prod
+
+Terraform Deployment Steps
+Step 1: Network Setup
+Navigate to the network directory for your environment:
+
+bash
+Copy code
+cd terraform/dev/network
+(Adjust path for staging or prod as needed.)
+
+Initialize Terraform:
+
+bash
+Copy code
+terraform init
+Validate the configuration:
+
+bash
+Copy code
+terraform validate
+Plan the infrastructure:
+
+bash
+Copy code
+terraform plan
+Apply the changes:
+
+bash
+Copy code
+terraform apply -auto-approve
+Step 2: Webservers Setup
+Navigate to the webservers directory:
+
+bash
+Copy code
+cd ../webservers
+Generate an SSH keypair:
+
+bash
+Copy code
+ssh-keygen -t rsa -f dev-keypair    # Replace 'dev' with 'staging' or 'prod'
+Initialize Terraform:
+
+bash
+Copy code
+terraform init
+Validate the configuration:
+
+bash
+Copy code
+terraform validate
+Plan the infrastructure:
+
+bash
+Copy code
+terraform plan
+Apply the changes:
+
+bash
+Copy code
+terraform apply -auto-approve
+Ansible Configuration Steps
+Step 1: Install Ansible and Dependencies
+Navigate to the Ansible directory:
+
+bash
+Copy code
+cd ../../ansible
+Install Ansible and dependencies:
+
+bash
+Copy code
+sudo yum install -y ansible
+ansible --version
+pip3 install boto3 botocore
+Step 2: Dynamic Inventory and Connectivity
+Test Ansible dynamic inventory:
+
+bash
+Copy code
+ansible-inventory --list
+Verify connectivity to all hosts:
+
+bash
+Copy code
+ansible all -m ping
+Step 3: Run the Playbook
+Update the playbook.yaml to use the correct SSH key path:
+
+yaml
+Copy code
+ansible_ssh_private_key_file: "../terraform/dev/webservers/dev-keypair"
+(Adjust for staging or prod.)
+
+Run the playbook:
+
+bash
+Copy code
+ansible-playbook playbook.yaml
+Cleanup
+To destroy the environment and avoid costs:
+
+bash
+Copy code
+cd ../terraform/dev/webservers
+terraform destroy -auto-approve
+
+cd ../network
+terraform destroy -auto-approve
+Repeat for other environments as needed.
+
 
 
 
