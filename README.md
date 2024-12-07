@@ -4,6 +4,8 @@
 
 This project automates the provisioning of a two-tier web application infrastructure on AWS using Terraform and Ansible. It sets up environments (Development, Staging, Production) with a consistent AWS architecture, manages configurations with Ansible, and uses Git branching strategies to segregate environments. The end result is a fully configured VPC with webservers accessible via SSH and HTTP, and private resources accessible through a bastion host and NAT gateway.
 
+**Note:** We have not implemented automated deployments through GitHub Actions in this setup.
+
 ---
 
 ## AWS Architecture
