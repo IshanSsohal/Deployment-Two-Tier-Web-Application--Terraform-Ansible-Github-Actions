@@ -57,94 +57,103 @@ Each branch corresponds to a separate environment. Before deploying a new enviro
    cd ACS730FinalProjectGroup7
    git checkout dev    # or staging or prod
 
-Terraform Deployment Steps
-Step 1: Network Setup
-Navigate to the network directory for your environment:
+## Terraform Deployment Steps
 
-cd terraform/dev/network
-(Adjust path for staging or prod as needed.)
+1. **Network Setup**
+   - Navigate to the network directory for your environment (adjust path for `staging` or `prod`):
+     ```bash
+     cd terraform/dev/network
+     ```
+   - Initialize Terraform:
+     ```bash
+     terraform init
+     ```
+   - Validate the configuration:
+     ```bash
+     terraform validate
+     ```
+   - Plan the infrastructure:
+     ```bash
+     terraform plan
+     ```
+   - Apply the changes:
+     ```bash
+     terraform apply -auto-approve
+     ```
 
-Initialize Terraform:
+2. **Webservers Setup**
+   - Navigate to the webservers directory:
+     ```bash
+     cd ../webservers
+     ```
+   - Generate an SSH keypair (replace `dev` with `staging` or `prod` as needed):
+     ```bash
+     ssh-keygen -t rsa -f dev-keypair
+     ```
+   - Initialize Terraform:
+     ```bash
+     terraform init
+     ```
+   - Validate the configuration:
+     ```bash
+     terraform validate
+     ```
+   - Plan the infrastructure:
+     ```bash
+     terraform plan
+     ```
+   - Apply the changes:
+     ```bash
+     terraform apply -auto-approve
+     ```
 
+---
 
-terraform init
-Validate the configuration:
+## Ansible Configuration Steps
 
+1. **Install Ansible and Dependencies**
+   - Navigate to the Ansible directory:
+     ```bash
+     cd ../../ansible
+     ```
+   - Install Ansible and dependencies:
+     ```bash
+     sudo yum install -y ansible
+     ansible --version
+     pip3 install boto3 botocore
+     ```
 
-terraform validate
-Plan the infrastructure:
+2. **Dynamic Inventory and Connectivity**
+   - Test Ansible dynamic inventory:
+     ```bash
+     ansible-inventory --list
+     ```
+   - Verify connectivity to all hosts:
+     ```bash
+     ansible all -m ping
+     ```
 
+3. **Run the Playbook**
+   - Update the `playbook.yaml` to use the correct SSH key path (adjust for `staging` or `prod`):
+     ```yaml
+     ansible_ssh_private_key_file: "../terraform/dev/webservers/dev-keypair"
+     ```
+   - Run the playbook:
+     ```bash
+     ansible-playbook playbook.yaml
+     ```
 
-terraform plan
-Apply the changes:
+---
 
+## Cleanup
 
-terraform apply -auto-approve
-Step 2: Webservers Setup
-Navigate to the webservers directory:
-
-
-cd ../webservers
-Generate an SSH keypair:
-ssh-keygen -t rsa -f dev-keypair    # Replace 'dev' with 'staging' or 'prod'
-
-
-
-Initialize Terraform:
-terraform init
-Validate the configuration:
-
-
-terraform validate
-Plan the infrastructure:
-terraform plan
-
-Apply the changes:
-terraform apply -auto-approve
-
-
-Ansible Configuration Steps
-Step 1: Install Ansible and Dependencies
-Navigate to the Ansible directory:
-
-cd ../../ansible
-Install Ansible and dependencies:
-
-sudo yum install -y ansible
-ansible --version
-pip3 install boto3 botocore
-
-
-Step 2: Dynamic Inventory and Connectivity
-Test Ansible dynamic inventory:
-
-ansible-inventory --list
-Verify connectivity to all hosts:
-
-ansible all -m ping
-
-
-Step 3: Run the Playbook
-Update the playbook.yaml to use the correct SSH key path:
-
-yaml
-Copy code
-ansible_ssh_private_key_file: "../terraform/dev/webservers/dev-keypair"
-(Adjust for staging or prod.)
-
-Run the playbook:
-ansible-playbook playbook.yaml
-
-
-Cleanup
-To destroy the environment and avoid costs:
-
-cd ../terraform/dev/webservers
-terraform destroy -auto-approve
-
-cd ../network
-terraform destroy -auto-approve
-Adjust for other environments as needed staging and prod.
+- Destroy the environment and avoid costs:
+  ```bash
+  cd ../terraform/dev/webservers
+  terraform destroy -auto-approve
+  
+  cd ../network
+  terraform destroy -auto-approve
 
 
 
