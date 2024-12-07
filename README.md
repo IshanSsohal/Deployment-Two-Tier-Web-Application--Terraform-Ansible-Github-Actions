@@ -1,43 +1,60 @@
-README.md for Group 7 deployment of Static Two-tier Web Application in AWS CLOUD
+# AWS Terraform Ansible Project
 
-# ACS730FinalProjectGroup7
-![image](https://github.com/user-attachments/assets/f888b455-ca84-4dc1-a233-e2812a0c9942)
+## Overview
 
-Fall-2024 Automation and Control Systems ACS730 Final Project
+This project automates the provisioning of a two-tier web application infrastructure on AWS using Terraform and Ansible. It sets up environments (Development, Staging, Production) with a consistent AWS architecture, manages configurations with Ansible, and uses Git branching strategies to segregate environments. The end result is a fully configured VPC with webservers accessible via SSH and HTTP, and private resources accessible through a bastion host and NAT gateway.
 
-Step- 1 Create S3 buckets for respective environment Dev or staging or prod
-with the name group-7-dev, or group-7-staging or group-7-prod
+---
+
+## AWS Architecture
+
+**Key Components:**
+- **VPC:** A Virtual Private Cloud is created to host all resources.
+- **Public Subnets:** Four public subnets span across different Availability Zones. These subnets host EC2 instances running HTTP webservers. SSH and HTTP access are available.
+- **Private Subnets:** Two private subnets are created for instances that are not directly reachable from the internet.
+- **Bastion Host:** A bastion host in one of the public subnets provides SSH access to private resources.
+- **NAT Gateway:** A NAT Gateway resides in the first public subnet, allowing outbound internet access for instances in the private subnets.
+- **S3 Bucket:** S3 buckets are used to store images and as Terraform backend storage (based on environment: dev, staging, prod).
+
+---
+
+## Tools and Technologies
+
+- **Terraform:** Used for infrastructure provisioning.
+- **Ansible:** Used for configuration management (installing webservers, testing connectivity).
+- **Git & GitHub:** Version control and branch management.
+- **Dynamic Inventory with Ansible:** Ansible dynamically pulls inventory data from AWS to manage configurations and deployments.
+
+---
+
+## Branching Strategy
+
+- **Environments:** 
+  - `dev` branch for Development
+  - `staging` branch for Staging
+  - `prod` branch for Production
+
+Each branch corresponds to a separate environment. Before deploying a new environment, it is recommended to destroy the previous one, as the sandbox environment may not support multiple simultaneous infrastructures.
+
+---
+
+## Prerequisites
 
 
-Step 2- clone the repo and upload the image to the bucket.
-a. upload the image you want to display on the Application and create a pre-signed URL for that image.
-b. now spin up your env where you want to clone the repository ACS730FinalProjectGroup7
-c. Clone the repository and checkout to the branch(dev, staging and prod) where you want to deploy the web app.
+1. **S3 Buckets for Environments:**  
+   - Create S3 buckets for each environment. For example:
+     - `group-7-dev`
+     - `group-7-staging`
+     - `group-7-prod`
+   
+   Upload the webserver image to the appropriate environment bucket and generate a pre-signed URL.
 
-Step 3- Copy the pre-signed URL created and then paste it into playbook.yaml in the s3_image_url: file in the ansible directory and install_httpd.sh template in "img_src=" terraform/modules/webservers/ directory.
+2. **Git Repository:**  
+   Clone the `ACS730FinalProjectGroup7` repository and checkout the branch corresponding to the environment you want to deploy:
+   ```bash
+   git clone https://github.com/YourOrg/ACS730FinalProjectGroup7.git
+   cd ACS730FinalProjectGroup7
+   git checkout dev    # or staging or prod
 
-Step 4-Navigate to terraform/(branchname)/network and run :
-                a. terraform init
-                b terraform  validate
-                c. terraform plan
-                d. terraform apply -auto-approve
-
-Step 5- Navigate to terraform/(branch-name)/webservers and create the ssh key by running this command.
-              "ssh-keygen -t rsa -f (branch-name)-keypair"
-Step 6- Run the following commands
-                a. terraform init
-                b terraform  validate
-                c. terraform plan
-                d. terraform apply -auto-approve
-
-
-TO CONFIGURE WEBSERVER3 AND WEBSERVER4 WITH ANSIBLE
-Step 7- Navigate to ACS730FinalProjectGroup7/ansible directory and install ansible, boto3, botocore and run the following commands
-                a. sudo yum install -y ansible
-                b. ansible --version
-                c. pip3 install boto3 botocore
-                d. ansible-inventory --list
-                e. ansible all -m ping
-                f. ansible-playbook playbook.yaml
 
 
